@@ -1,0 +1,18 @@
+[package]
+name = "ft_session_token"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "ft_session_token"
+crate-type = ["cdylib"]
+
+[dependencies]
+chrono = "0.4.38"
+lazy_static = "1.5.0"
+libotp = "0.2.0"
+reqwest = { version = "0.12.9", features = ["cookies", "json", "blocking"]}
+serde = {version = "1.0.215", features = ["derive"]}
+serde_json = "1.0.133"
+sha2 = "0.10.8"
+url = "2.5.4"
