@@ -31,16 +31,6 @@ lazy_static! {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct CRED {
-    user: String,
-    password: String,
-    totp_key: String,
-    enctoken: String,
-    api_key: String,
-    api_secret: String
-}
-
 #[derive(Serialize)]
 struct AuthJson {
     #[serde(rename = "UserName")]
