@@ -1,2 +1,7 @@
 release/
 target/
+
+*.sln
+.vscode/
+bin/
+obj/
