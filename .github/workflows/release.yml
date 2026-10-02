@@ -1,0 +1,105 @@
+name: Build and Release Shared Libraries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }} (${{ matrix.platform_dir }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-26.04
+            cibw_archs: "x86_64"
+            platform_dir: linux-x86_64
+            binary_name: libft_session_token.so
+
+          - os: ubuntu-26.04-arm
+            cibw_archs: "aarch64"
+            platform_dir: linux-aarch64
+            binary_name: libft_session_token.so
+
+          - os: windows-2025-vs2026
+            cibw_archs: "AMD64"
+            platform_dir: windows-x86_64
+            binary_name: ft_session_token.dll
+
+          - os: windows-11-vs2026-arm
+            cibw_archs: "ARM64"
+            platform_dir: windows-aarch64
+            binary_name: ft_session_token.dll
+
+          - os: macos-15
+            cibw_archs: "arm64"
+            platform_dir: macos-arm64
+            binary_name: libft_session_token.dylib
+
+          - os: macos-15-intel
+            cibw_archs: "x86_64"
+            platform_dir: macos-x86_64
+            binary_name: libft_session_token.dylib
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y pkg-config libssl-dev build-essential
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build shared library
+        working-directory: ft_session_token
+        run: cargo build --release
+
+      - name: Stage Binary into Platform Folder
+        run: |
+          mkdir -p release/${{ matrix.platform_dir }}
+          cp ft_session_token/target/release/${{ matrix.binary_name }} release/${{ matrix.platform_dir }}/
+        shell: bash
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.platform_dir }}
+          path: release/${{ matrix.platform_dir }}/${{ matrix.binary_name }}
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all built binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+
+      - name: Prepare Folder Structure & Zip Archives
+        run: |
+          mkdir -p final_release
+          for dir in release_artifacts/binary-*; do
+            platform=$(basename "$dir" | sed 's/binary-//')
+            mkdir -p "final_release/$platform"
+            cp "$dir"/* "final_release/$platform/"
+            
+            (cd final_release && zip -r "ft_session_token-$platform.zip" "$platform")
+          done
+          ls -la final_release/
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: final_release/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
