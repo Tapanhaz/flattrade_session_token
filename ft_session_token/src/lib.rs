@@ -3,7 +3,7 @@ use sha2::{Sha256, Digest};
 use lazy_static:: lazy_static;
 use url::{Url, form_urlencoded};
 use serde::{Deserialize, Serialize};
-use std::{collections:: HashMap, str::FromStr, ffi::{CString, CStr}};
+use std::{collections:: HashMap, str::FromStr, ffi::{CString, CStr, c_char}};
 use reqwest::{header::{HeaderMap, HeaderValue, ACCEPT, ACCEPT_LANGUAGE, HOST, ORIGIN, REFERER}, blocking:: Client};
 
 const FLATTRADE_HOST: &str = "https://auth.flattrade.in";
@@ -109,13 +109,13 @@ fn generate_otp(totp_key: &str) -> String {
 
 #[no_mangle]
 pub extern "C" fn get_session_token(
-                user: *const i8,
-                password: *const i8,
-                totp_key: *const i8,
-                api_key: *const i8,
-                api_secret: *const i8,
+                user: *const c_char,
+                password: *const c_char,
+                totp_key: *const c_char,
+                api_key: *const c_char,
+                api_secret: *const c_char,
                 verbose: i8
-            ) -> *mut i8 {
+            ) -> *mut c_char {
     let user_str: String;
     let password_str: String;
     let totp_key_str: String;
